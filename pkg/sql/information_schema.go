@@ -1729,7 +1729,7 @@ func forEachTypeDesc(
 	dbContext *dbdesc.Immutable,
 	fn func(db *dbdesc.Immutable, sc string, typ *typedesc.Immutable) error,
 ) error {
-	descs, err := p.Descriptors().GetAllDescriptors(ctx, p.txn, true /* validate */)
+	descs, err := p.Descriptors().GetAllDescriptors(ctx, p.txn, false /* validate */)
 	if err != nil {
 		return err
 	}
@@ -1809,7 +1809,7 @@ func forEachTableDescAll(
 	fn func(*dbdesc.Immutable, string, catalog.TableDescriptor) error,
 ) error {
 	return forEachTableDescAllWithTableLookup(ctx,
-		p, dbContext, virtualOpts, true, /* validate */
+		p, dbContext, virtualOpts, false, /* validate */
 		func(
 			db *dbdesc.Immutable,
 			scName string,
@@ -1853,7 +1853,7 @@ func forEachTableDescWithTableLookup(
 	fn func(*dbdesc.Immutable, string, catalog.TableDescriptor, tableLookupFn) error,
 ) error {
 	return forEachTableDescWithTableLookupInternal(
-		ctx, p, dbContext, virtualOpts, false /* allowAdding */, true, fn,
+		ctx, p, dbContext, virtualOpts, false /* allowAdding */, false /* validate */, fn,
 	)
 }
 

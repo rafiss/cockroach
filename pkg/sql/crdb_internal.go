@@ -2204,7 +2204,7 @@ CREATE TABLE crdb_internal.backward_dependencies (
 		viewDep := tree.NewDString("view")
 		sequenceDep := tree.NewDString("sequence")
 		interleaveDep := tree.NewDString("interleave")
-		return forEachTableDescAllWithTableLookup(ctx, p, dbContext, hideVirtual, true, /* validate */
+		return forEachTableDescAllWithTableLookup(ctx, p, dbContext, hideVirtual, false, /* validate */
 			/* virtual tables have no backward/forward dependencies*/
 			func(db *dbdesc.Immutable, _ string, table catalog.TableDescriptor, tableLookup tableLookupFn) error {
 				tableID := tree.NewDInt(tree.DInt(table.GetID()))
