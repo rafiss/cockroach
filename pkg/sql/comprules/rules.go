@@ -147,18 +147,26 @@ func completeFunction(ctx context.Context, c compengine.Context) (compengine.Row
 	// instead of crdb_internal. This requires exposing comments for
 	// built-in functions through pg_catalog.
 	const query = `
-WITH p AS (SELECT DISTINCT proname, nspname FROM pg_catalog.pg_proc JOIN pg_catalog.pg_namespace n ON n.oid = pronamespace)
-SELECT $4:::STRING || IF(length($4) > 0, '.', '') || proname || '(' AS completion,
+WITH p AS (
+SELECT DISTINCT
+       proname, nspname
+  FROM pg_catalog.pg_proc
+  JOIN pg_catalog.pg_namespace n ON n.oid = pronamespace)
+SELECT pg_catalog.quote_ident($4:::STRING) ||
+       IF(length($4) > 0, '.', '') ||
+       pg_catalog.quote_ident(proname) || '(' AS completion,
        'functions' AS category,
-       substr(COALESCE((SELECT details
+       substr(COALESCE((
+         SELECT details
           FROM "".crdb_internal.builtin_functions f2
-         WHERE f2.function = p.proname
+         WHERE f2.function = p.proname AND f2.schema = p.nspname
          LIMIT 1), ''), e'[^\n]{0,80}') AS description,
        $2:::INT AS start,
        $3:::INT AS end
   FROM p
  WHERE left(proname, length($1:::STRING)) = $1:::STRING
- AND ((length($4) > 0 AND $4 = nspname) OR (length($4) = 0 AND nspname = ANY current_schemas(true)))`
+ AND ((length($4) > 0 AND $4 = nspname)
+   OR (length($4) = 0 AND nspname = ANY current_schemas(true)))`
 	iter, err := c.Query(ctx, query, prefix, start, end, schemaName)
 	return iter, err
 }

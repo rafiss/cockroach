@@ -2721,18 +2721,25 @@ CREATE TABLE crdb_internal.builtin_functions (
   function  STRING NOT NULL,
   signature STRING NOT NULL,
   category  STRING NOT NULL,
-  details   STRING NOT NULL
+  details   STRING NOT NULL,
+  schema    STRING NOT NULL
 )`,
 	populate: func(ctx context.Context, _ *planner, _ catalog.DatabaseDescriptor, addRow func(...tree.Datum) error) error {
 		for _, name := range builtins.AllBuiltinNames() {
 			props, overloads := builtinsregistry.GetBuiltinProperties(name)
-			name = strings.TrimPrefix(name, "crdb_internal.")
+			schema := catconstants.PgCatalogName
+			const crdbInternal = catconstants.CRDBInternalSchemaName + "."
+			if strings.HasPrefix(name, crdbInternal) {
+				name = name[len(crdbInternal):]
+				schema = crdbInternal[:len(crdbInternal)-1] // strip the '.'
+			}
 			for _, f := range overloads {
 				if err := addRow(
 					tree.NewDString(name),
 					tree.NewDString(f.Signature(false /* simplify */)),
 					tree.NewDString(props.Category),
 					tree.NewDString(f.Info),
+					tree.NewDString(schema),
 				); err != nil {
 					return err
 				}
