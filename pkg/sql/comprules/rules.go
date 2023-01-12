@@ -138,11 +138,7 @@ func completeFunction(ctx context.Context, c compengine.Context) (compengine.Row
 		return nil, nil
 	}
 
-	qualifiedPrefix := prefix
-	if len(schemaName) > 0 {
-		qualifiedPrefix = schemaName + "." + qualifiedPrefix
-	}
-	c.Trace("completing for %q (%d,%d)", qualifiedPrefix, start, end)
+	c.Trace("completing for %q (%d,%d) with schema %q", prefix, start, end, schemaName)
 	// TODO(knz): use the comment extraction functions from pg_catalog
 	// instead of crdb_internal. This requires exposing comments for
 	// built-in functions through pg_catalog.
