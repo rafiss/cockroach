@@ -926,6 +926,36 @@ decomputed_column  CREATE TABLE public.decomputed_column (
                      CONSTRAINT decomputed_column_pkey PRIMARY KEY (a ASC)
                    ) WITH (schema_locked = true);
 
+# Regression test for #80314: replacing a column via a computed column backfill
+# and swap in a single transaction should not lose data.
+subtest 80314
+
+statement ok
+CREATE TABLE t_80314 (i INT PRIMARY KEY, j INT FAMILY "j")
+
+statement ok
+INSERT INTO t_80314 VALUES (1, 10), (2, 20), (3, 30)
+
+statement ok
+BEGIN;
+ALTER TABLE t_80314 ADD COLUMN new_column INT NOT VISIBLE AS (j) STORED;
+ALTER TABLE t_80314 ALTER COLUMN new_column DROP STORED,
+    ALTER COLUMN new_column SET VISIBLE,
+    RENAME COLUMN j TO old_column,
+    RENAME COLUMN new_column TO j,
+    ALTER COLUMN old_column SET NOT VISIBLE;
+ALTER TABLE t_80314 DROP COLUMN old_column;
+COMMIT
+
+query II rowsort
+SELECT i, j FROM t_80314
+----
+1  10
+2  20
+3  30
+
+subtest end
+
 # Test for https://github.com/cockroachdb/cockroach/issues/26483
 # We try to create a unique column on an un-indexable type.
 statement ok
